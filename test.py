@@ -1,110 +1,34 @@
 import re
 import spacy
 
-# Загрузка модели spaCy
-nlp = spacy.load("en_core_web_sm")
 
-# Пример текста
-text = """
-Конечно, вот некоторые тест-кейсы:
 
-1. Правильная ссылка: "Посетите наш веб-сайт: https://www.example.com"
-2. Правильная ссылка без протокола: "Посетите наш веб-сайт: www.example.com"
-3. Правильная ссылка без www: "Посетите наш веб-сайт: https://example.com"
-4. Правильная ссылка с поддоменом: "Посетите наш веб-сайт: https://subdomain.example.com"
-5. Неправильная ссылка с пропущенной точкой: "Посетите наш веб-сайт: https://examplecom"
-6. Неправильная ссылка с неверным доменом: "Посетите наш веб-сайт: https://invalid-domain123.com"
-7. Неправильная ссылка с неверным доменным зоном: "Посетите наш веб-сайт: https://example.invalid"
-8. Неправильная ссылка с пропущенным доменом: "Посетите наш веб-сайт: https://.com"
-9. Правильная ссылка с дополнительными параметрами: "Посетите наш веб-сайт: https://www.example.com/page?param=value"
-10. Неправильная ссылка с пропущенным протоколом: "Посетите наш веб-сайт: www.example.com"
-11. Неправильная ссылка с неверным портом: "Посетите наш веб-сайт: https://www.example.com:abc"
-12. Правильная ссылка с длинным путем: "Посетите наш веб-сайт: https://www.example.com/very/long/path/to/page"
-13. Правильная ссылка с дефисом в домене: "Посетите наш веб-сайт: https://my-example-domain.com"
-14. Неправильная ссылка с пробелами: "Посетите наш веб-сайт: https://www.example. com"
-15. Правильная ссылка с подчеркиваниями в домене: "Посетите наш веб-сайт: https://my_example_domain.com"
-16. Правильная ссылка с дополнительными путями и параметрами: "Посетите наш веб-сайт: https://www.example.com/page/subpage?param=value"
-17. Неправильная ссылка с отсутствующим доменом: "Посетите наш веб-сайт: https://.com/page"
-18. Неправильная ссылка с отсутствующим протоколом и доменом: "Посетите наш веб-сайт: example.com"
-19. Правильная ссылка с IP-адресом: "Посетите наш веб-сайт: https://192.0.2.1"
-20. Неправильная ссылка с недопустимыми символами: "Посетите наш веб-сайт: https://www.example.com/!@#$%^&*()"
-21. Правильная ссылка с дополнительными точками в пути: "Посетите наш веб-сайт: https://www.example.com/path../page.html"
-22. Правильная ссылка с дополнительными дефисами в пути: "Посетите наш веб-сайт: https://www.example.com/-path--/"
-23. Неправильная ссылка с отсутствующим протоколом и доменом, но с путем: "Посетите наш веб-сайт: /page"
-24. Правильная ссылка с коротким доменным именем: "Посетите наш веб-сайт: https://x.co"
-25. Неправильная ссылка с неверным форматом протокола: "Посетите наш веб-сайт: htttps://www.example.com"
-26. Правильная ссылка с дефисом в поддомене: "Посетите наш веб-сайт: https://sub-domain.example.com"
-27. Правильная ссылка с дополнительными дефисами в поддомене: "Посетите наш веб-сайт: https://sub--domain.example.com"
-28. Неправильная ссылка с отсутствующим доменом и путем: "Посетите наш веб-сайт: https://"
-29. Правильная ссылка с дополнительными знаками препинания: "Посетите наш веб-сайт: https://www.example.com/page/,;='&"
-30. Правильная ссылка с дополнительными дефисами и точками в домене: "Посетите наш веб-сайт: https://sub--domain.example.co.uk"
-31. Неправильная ссылка с отсутствующим путем: "Посетите наш веб-сайт: https://www.example.com/"
-32. Неправильная ссылка с пропущенным доменным именем: "Посетите наш веб-сайт: https://.com/page"
-33. Правильная ссылка с дополнительными знаками: "Посетите наш веб-сайт: https://www.example.com/page~!@$%^&*()_-+={[}]|:;<,>.?/"
-34. Правильная ссылка с номером порта: "Посетите наш веб-сайт: https://www.example.com:8080"
-35. Неправильная ссылка с пропущенным путем и доменным именем: "Посетите наш веб-сайт: https://.com"
-36. Правильная ссылка с дополнительными кавычк
-37. Неправильная ссылка с пропущенным протоколом и доменом, но с путем в кавычках: "Посетите наш веб-сайт: "/page"
-38. Правильная ссылка с дополнительными параметрами и символами в пути: "Посетите наш веб-сайт: https://www.example.com/page?key=value&param1=123"
-39. Правильная ссылка с дополнительными знаками препинания в домене: "Посетите наш веб-сайт: https://www.example-site.com/page"
-40. Неправильная ссылка с недопустимым доменом и IP-адресом: "Посетите наш веб-сайт: https://invalid-domain&ip=192.0.2.1"
-41. Правильная ссылка с дополнительным символом подчеркивания в пути: "Посетите наш веб-сайт: https://www.example.com/_page"
-42. Неправильная ссылка с пропущенным путем и параметрами: "Посетите наш веб-сайт: https://www.example.com?"
-43. Правильная ссылка с дополнительным символом плюса в пути: "Посетите наш веб-сайт: https://www.example.com/+/page"
-44. Неправильная ссылка с пропущенными параметрами: "Посетите наш веб-сайт: https://www.example.com/page?"
-45. Правильная ссылка с дополнительным символом тире в пути: "Посетите наш веб-сайт: https://www.example.com/-page"
-46. Правильная ссылка с дополнительным символом равенства в параметрах: "Посетите наш веб-сайт: https://www.example.com/page?key=value&param1=123&param2=456"
-47. Неправильная ссылка с недопустимым доменом и пробелами в параметрах: "Посетите наш веб-сайт: https://invalid domain.com/page?key=value with space"
-48. Правильная ссылка с дополнительными дефисами и точками в поддомене: "Посетите наш веб-сайт: https://sub--domain.example.com/page"
-49. Неправильная ссылка с пропущенным протоколом и путем в угловых скобках: "Посетите наш веб-сайт: <www.example.com>"
-50. Правильная ссылка с дополнительным символом точки в параметрах: "Посетите наш веб-сайт: https://www.example.com/page?key=value.with.dot"
-51. Неправильная ссылка с пропущенными параметрами и доменным именем в квадратных скобках: "Посетите наш веб-сайт: [https://www.example.com]"
-52. Правильная ссылка с дополнительным символом дефиса в параметрах: "Посетите наш веб-сайт: https://www.example.com/page?key=value-with-dash"
-53. Неправильная ссылка с пропущенными параметрами и дополнительным текстом в круглых скобках: "Посетите наш веб-сайт: https://www.example.com (page)"
-54. Правильная ссылка с дополнительными символами в параметрах: "Посетите наш веб-сайт: https://www.example.com/page?key=value&param[]=1&param[]=2"
-55. Неправильная ссылка с пропущенными параметрами и дополнительным текстом в фигурных скобках: "Посетите наш веб-сайт: https://www.example.com {page}"
-56. Правильная ссылка с дополнительными символами в параметрах и пути: "Посетите наш веб-сайт: https://www.example.com/page+path?key=value&param=123"
-57. Неправильная ссылка с пропущенными параметрами и путем в апострофах: "Посетите наш веб-сайт: 'https://www.example.com/page'"
-58. Правильная ссылка с дополнительными символами в параметрах и пути в кавычках: "Посетите наш веб-сайт: "https://www.example.com/page?key=value&path=/folder/page""
-59. Неправильная ссылка с пропущенным путем и дополнительным текстом в знаках тильды: "Посетите наш веб-сайт: https://www.example.com/~"
-60. Правильная ссылка с дополнительным символом в пути и параметрах: "Посетите наш веб-сайт: https://www.example.com/path+page?key=value"
-61. Неправильная ссылка с пропущенным протоколом и путем в знаках вопроса: "Посетите наш веб-сайт: ?www.example.com"
-62. Правильная ссылка с дополнительным символом в пути и параметрах: "Посетите наш веб-сайт: https://www.example.com/page/key+value"
-63. Неправильная ссылка с пропущенным протоколом и параметрами: "Посетите наш веб-сайт: www.example.com?key=value"
-64. Правильная ссылка с дополнительным символом в пути и параметрах: "Посетите наш веб-сайт: https://www.example.com/page+key=value"
-65. Неправильная ссылка с пропущенным доменным именем и параметрам
-"""
+def Parsing(text, flag):
+    nlp = spacy.load("en_core_web_sm")
 
-# Регулярные выражения для email, URL и Telegram аккаунтов
-email_pattern = re.compile(r'\b[a-zA-Zа-яА-Я0-9_.+-]+@[a-zA-Zа-яА-Я0-9-]+\.[a-zA-Zа-яА-Я]{2,}\b')
-url_pattern = re.compile(r'\b((https?://)?([^\s]+?\.[^\s]+))\b')
-telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')
+    email_pattern = re.compile(r'\b[a-zA-Zа-яА-Я0-9_.+-]+@[a-zA-Zа-яА-Я0-9-]+\.[a-zA-Zа-яА-Я]{2,}\b')
+    url_pattern = re.compile(r'\b((https?://)?([^\s]+?\.[^\s]+))\b')
+    telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')
+    
+    doc = nlp(text)
 
-# Обработка текста spaCy
-doc = nlp(text)
+    if flag == 1:
+        emails_spacy = [token.text for token in doc if token.like_email]
+        emails_regex = email_pattern.findall(text)
+        emails = list(set(emails_spacy + emails_regex))
+        print("Emails:", emails)
+    elif flag == 2:
+        # urls_spacy = [token.text for token in doc if token.like_url]
+        urls_regex = url_pattern.findall(text)
+        with open("TLD_LIST.txt", "r") as file:
+            valid_tlds = file.read().lower()
 
-# Использование spaCy для поиска email и URL
-emails_spacy = [token.text for token in doc if token.like_email]
-urls_spacy = [token.text for token in doc if token.like_url]
+        urls_filtered = [url[0] for url in urls_regex if url[0].split('.')[-1] in valid_tlds]
+        urls = list(set(urls_filtered))
+        print("URLs:", urls)
+    elif flag == 3:
+        telegram_accounts = telegram_pattern.findall(text)
+        telegram_accounts = list(set(telegram_accounts))
+        print("Telegram Accounts:", telegram_accounts)
 
-# Поиск email, URL и Telegram аккаунтов с использованием регулярных выражений
-emails_regex = email_pattern.findall(text)
-urls_regex = url_pattern.findall(text)
-telegram_accounts = telegram_pattern.findall(text)
-
-print(urls_regex)
-print()
-
-# Удаление некорректных URL, которые не являются действительными доменами верхнего уровня
-valid_tlds = {"com", "org", "net", "int", "edu", "gov", "mil", "РФ"}  # Дополните при необходимости
-urls_filtered = [url[0] for url in urls_regex if url[0].split('.')[-1] in valid_tlds]
-
-# Объединение и удаление дубликатов
-emails = list(set(emails_spacy + emails_regex))
-urls = list(set(urls_filtered))
-telegram_accounts = list(set(telegram_accounts))
-
-# Вывод результатов
-print("Emails:", emails)
-print("URLs:", urls)
-print("Telegram Accounts:", telegram_accounts)
+        

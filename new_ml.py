@@ -1,12 +1,10 @@
-import sys
 import numpy as np
-import pickle
-import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score
 import csv
+import test
 
 
 def load_data_from_csv(filename):
@@ -42,9 +40,6 @@ def openai():
     ])
     text_clf.fit(D['test']['x'], D['test']['y'])
     predicted = text_clf.predict(D['test']['x'])
-
-    # Начало тестирования программы
-    # z = input("Введите вопрос без знака вопроса на конце: ")
     
     z = open("test_set.txt", encoding="utf-8")
     
@@ -56,11 +51,19 @@ def openai():
         predicted = text_clf.predict(zz)
         result = line.split()[1].removesuffix(":")
         if predicted[0] == result:
-            successCount+=1
             print("Success: ", predicted[0])
+
+            if result == "Почта":
+                test.Parsing(line, 1)
+            elif result == "Ссылка":
+                test.Parsing(line, 2)
+            elif result == "Телеграм":
+                test.Parsing(line, 3) 
+                
+            successCount+=1
         else:
             failedCount+=1
-            print("Fail: ", predicted[0], "| need result =", result, "| line =", line)
+            # print("Fail: ", predicted[0], "| need result =", result, "| line =", line)
     
     print("successCount = ", successCount)
     print("failedCount = ", failedCount)
