@@ -3,7 +3,7 @@ import spacy
 
 
 
-def Parsing(text, flag):
+def Parsing(text, flag) -> str:
     nlp = spacy.load("en_core_web_sm")
 
     email_pattern = re.compile(r'\b[a-zA-Zа-яА-Я0-9_.+-]+@[a-zA-Zа-яА-Я0-9-]+\.[a-zA-Zа-яА-Я]{2,}\b')
@@ -16,7 +16,7 @@ def Parsing(text, flag):
         emails_spacy = [token.text for token in doc if token.like_email]
         emails_regex = email_pattern.findall(text)
         emails = list(set(emails_spacy + emails_regex))
-        print("Emails:", emails)
+        return emails
     elif flag == 2:
         # urls_spacy = [token.text for token in doc if token.like_url]
         urls_regex = url_pattern.findall(text)
@@ -25,10 +25,11 @@ def Parsing(text, flag):
 
         urls_filtered = [url[0] for url in urls_regex if url[0].split('.')[-1] in valid_tlds]
         urls = list(set(urls_filtered))
-        print("URLs:", urls)
+        return urls
     elif flag == 3:
         telegram_accounts = telegram_pattern.findall(text)
+        print(telegram_accounts)
         telegram_accounts = list(set(telegram_accounts))
-        print("Telegram Accounts:", telegram_accounts)
-
+        print(telegram_accounts)
+        return telegram_accounts
         

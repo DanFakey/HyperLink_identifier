@@ -30,7 +30,7 @@ def train_test_split(data, validation_split=0.1):
         'test': {'x': X[-nb_validation_samples:], 'y': Y[-nb_validation_samples:]}
     }
 
-def openai():
+def openai(text) -> str:
     data = load_data_from_csv('train_set.csv')
     D = train_test_split(data)
     
@@ -41,32 +41,19 @@ def openai():
     text_clf.fit(D['test']['x'], D['test']['y'])
     predicted = text_clf.predict(D['test']['x'])
     
-    z = open("test_set.txt", encoding="utf-8")
     
-    successCount = 0
-    failedCount = 0
-    
-    for line in z:
-        zz = [line]
-        predicted = text_clf.predict(zz)
-        result = line.split()[1].removesuffix(":")
-        if predicted[0] == result:
-            print("Success: ", predicted[0])
+    zz = [text]
+    predicted = text_clf.predict(zz)
+    result = ""
 
-            if result == "Почта":
-                test.Parsing(line, 1)
-            elif result == "Ссылка":
-                test.Parsing(line, 2)
-            elif result == "Телеграм":
-                test.Parsing(line, 3) 
-                
-            successCount+=1
-        else:
-            failedCount+=1
-            # print("Fail: ", predicted[0], "| need result =", result, "| line =", line)
-    
-    print("successCount = ", successCount)
-    print("failedCount = ", failedCount)
+    if predicted == "Почта":
+        result = test.Parsing(text, 1)
+    elif predicted == "Ссылка":
+        result = test.Parsing(text, 2)
+    elif predicted == "Телеграм":
+        result = test.Parsing(text, 3) 
+            
+    return result 
 
 if __name__ == '__main__':
     openai()
