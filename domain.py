@@ -18,15 +18,15 @@ def is_domain_allowed(domain, allowed_domains):
 def get_user_domain():
     return input("Введите домен: ").strip()
 
-def check_domain(url, domain):
+def check_domain(url, user_domain):
     allowed_domains = load_allowed_domains(url)
-    if is_domain_allowed(user_domain, allowed_domains):
-        print("Домен разрешен")
-    else:
-        print("Домен не разрешен")
+    return is_domain_allowed(user_domain, allowed_domains)
 
 def run_check_domain():
     allowed_domains_url = 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
     user_domain = get_user_domain()
     result = check_domain(allowed_domains_url, user_domain)
-    print(result)
+    if result:
+        print("Домен разрешен")
+    else:
+        print("Домен не разрешен")
