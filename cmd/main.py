@@ -1,11 +1,12 @@
 import tkinter as tk
-import new_ml
+import src.helper
+
 
 def process_input():
     # Получаем входную строку
     input_text = entry.get()
     
-    result = new_ml.openai(input_text)
+    result = src.helper.openai(input_text)
     
     # Выполняем некоторую логику
     # output_text = input_text[::-1]  # Переворачиваем строку, например
