@@ -1,35 +1,59 @@
-import re
 import spacy
+from email_validator import validate_email, EmailNotValidError
+import idna
+import unicodedata
 
+
+def normalize_domain(domain):
+    # Normalize domain using NFC
+    normalized_domain = unicodedata.normalize('NFC', domain)
+    try:
+        # Convert to ASCII using IDNA
+        ascii_domain = idna.encode(normalized_domain).decode('ascii')
+    except idna.IDNAError:
+        ascii_domain = None
+    return ascii_domain
 
 
 def Parsing(text, flag) -> str:
     nlp = spacy.load("en_core_web_sm")
-
-    email_pattern = re.compile(r'\b[a-zA-Zа-яА-Я0-9_.+-]+@[a-zA-Zа-яА-Я0-9-]+\.[a-zA-Zа-яА-Я]{2,}\b')
-    url_pattern = re.compile(r'\b((https?://)?([^\s]+?\.[^\s]+))\b')
-    telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')
-    
     doc = nlp(text)
 
     if flag == 1:
         emails_spacy = [token.text for token in doc if token.like_email]
-        emails_regex = email_pattern.findall(text)
-        emails = list(set(emails_spacy + emails_regex))
-        return emails
-    elif flag == 2:
-        # urls_spacy = [token.text for token in doc if token.like_url]
-        urls_regex = url_pattern.findall(text)
-        with open("TLD_LIST.txt", "r") as file:
-            valid_tlds = file.read().lower()
 
-        urls_filtered = [url[0] for url in urls_regex if url[0].split('.')[-1] in valid_tlds]
-        urls = list(set(urls_filtered))
+        valid_emails = []
+        for email in emails_spacy:
+            try:
+                v = validate_email(email)
+                normalized_domain = normalize_domain(v['domain'])
+                if normalized_domain:
+                    local_part = v['local']
+                    valid_emails.append(f"{local_part}@{normalized_domain}")
+            except EmailNotValidError:
+                continue
+        return valid_emails
+
+    elif flag == 2:
+        urls_spacy = [token.text for token in doc if token.like_url]
+
+        with open("TLD_LIST.txt", "r") as file:
+            valid_tlds = file.read().lower().split()
+
+        valid_urls = []
+        for url in urls_spacy:
+            domain = url.split('.')[-1].lower()
+            if domain in valid_tlds:
+                try:
+                    normalized_url = normalize_domain(url)
+                    if normalized_url:
+                        valid_urls.append(normalized_url)
+                except idna.IDNAError:
+                    continue
+        urls = list(set(valid_urls))
         return urls
+
     elif flag == 3:
-        telegram_accounts = telegram_pattern.findall(text)
-        print(telegram_accounts)
+        telegram_accounts = [token.text for token in doc if token.text.startswith('@') and len(token.text) > 5]
         telegram_accounts = list(set(telegram_accounts))
-        print(telegram_accounts)
         return telegram_accounts
-        
