@@ -1,3 +1,5 @@
+import requests
+import idna
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import SGDClassifier
@@ -67,7 +69,6 @@ def Parsing(text, flag) -> str:
     nlp = spacy.load("en_core_web_sm")
 
     email_pattern = re.compile(r'\b[a-zA-Zа-яА-Я0-9_.+-]+@[a-zA-Zа-яА-Я0-9-]+\.[a-zA-Zа-яА-Я]{2,}\b')
-    url_pattern = re.compile(r'\b((https?://)?([^\s]+?\.[^\s]+))\b')
     telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')
     
     doc = nlp(text)
@@ -79,13 +80,11 @@ def Parsing(text, flag) -> str:
         return emails
     elif flag == 2:
         # urls_spacy = [token.text for token in doc if token.like_url]
-        urls_regex = url_pattern.findall(text)
-        with open("TLD_LIST.txt", "r") as file:
-            valid_tlds = file.read().lower()
-
-        urls_filtered = [url[0] for url in urls_regex if url[0].split('.')[-1] in valid_tlds]
-        urls = list(set(urls_filtered))
-        return urls
+        valid_tlds = run_check_domain(text)
+        if valid_tlds:
+            return text
+        else:
+            return
     elif flag == 3:
         telegram_accounts = telegram_pattern.findall(text)
         print(telegram_accounts)
@@ -93,3 +92,25 @@ def Parsing(text, flag) -> str:
         print(telegram_accounts)
         return telegram_accounts
         
+
+def load_allowed_domains(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text.splitlines()
+    else:
+        raise Exception("Не удалось загрузить список доменов")
+
+def is_domain_allowed(domain, allowed_domains):
+    try:
+        punycode_domain = idna.encode(domain).decode('ascii')
+    except idna.IDNAError:
+        return False
+    return punycode_domain in allowed_domains
+
+def check_domain(url, user_domain):
+    allowed_domains = load_allowed_domains(url)
+    return is_domain_allowed(user_domain, allowed_domains)
+
+def run_check_domain(user_domain) -> bool:
+    allowed_domains_url = 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
+    return check_domain(allowed_domains_url, user_domain)
