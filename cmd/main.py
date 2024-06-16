@@ -1,12 +1,12 @@
 import tkinter as tk
-import src.helper
+import helper
 
 
 def process_input():
     # Получаем входную строку
     input_text = entry.get()
     
-    result = src.helper.openai(input_text)
+    result = helper.openai(input_text)
     
     # Выполняем некоторую логику
     # output_text = input_text[::-1]  # Переворачиваем строку, например
