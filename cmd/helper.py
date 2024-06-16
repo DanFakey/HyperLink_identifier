@@ -108,10 +108,8 @@ def Parsing(text, flag) -> str:
         urls = list(set(valid_urls))
         return urls
     elif flag == 3:
-        telegram_accounts = telegram_pattern.findall(text)
-        print(telegram_accounts)
+        telegram_accounts = [token.text for token in doc if token.text.startswith('@') and len(token.text) > 5]
         telegram_accounts = list(set(telegram_accounts))
-        print(telegram_accounts)
         return telegram_accounts
         
 
