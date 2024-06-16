@@ -75,7 +75,6 @@ def train_test_split(data, validation_split=0.1):
 def Parsing(text, flag) -> str:
     nlp = spacy.load("en_core_web_sm")
 
-    email_pattern = re.compile(r'\b[a-zA-Zа-яА-Я0-9_.+-]+@[a-zA-Zа-яА-Я0-9-]+\.[a-zA-Zа-яА-Я]{2,}\b')
     telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')    
     doc = nlp(text)
 
@@ -94,12 +93,20 @@ def Parsing(text, flag) -> str:
                 continue
         return valid_emails
     elif flag == 2:
-        # urls_spacy = [token.text for token in doc if token.like_url]
-        valid_tlds = run_check_domain(text)
-        if valid_tlds:
-            return text
-        else:
-            return
+        urls_spacy = [token.text for token in doc if token.like_url]
+        valid_urls = []
+        for url in urls_spacy:
+            domain = url.split('.')[-1].lower()
+            print("domain = ", domain)
+            if run_check_domain(domain):
+                try:
+                    normalized_url = normalize_domain(url)
+                    if normalized_url:
+                        valid_urls.append(normalized_url)
+                except idna.IDNAError:
+                    continue
+        urls = list(set(valid_urls))
+        return urls
     elif flag == 3:
         telegram_accounts = telegram_pattern.findall(text)
         print(telegram_accounts)
