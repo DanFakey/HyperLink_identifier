@@ -8,6 +8,10 @@ from sklearn.metrics import accuracy_score
 import csv
 import re
 import spacy
+from email_validator import validate_email, EmailNotValidError
+import idna
+import unicodedata
+
 
 def process_input(input_text):
     result = openai(input_text)
@@ -31,14 +35,17 @@ def openai(text) -> str:
     result = ""
 
     if predicted == "Почта":
-        print("here 1")
+        print("Это почта")
         result = Parsing(text, 1)
     elif predicted == "Ссылка":
-        print("here 2")
+        print("Это ссылка")
         result = Parsing(text, 2)
     elif predicted == "Телеграм":
-        print("here 3")
+        print("Это телеграм")
         result = Parsing(text, 3)
+    elif predicted == "ВК":
+        print("Это ВК")
+        
             
     return result 
 
@@ -69,15 +76,23 @@ def Parsing(text, flag) -> str:
     nlp = spacy.load("en_core_web_sm")
 
     email_pattern = re.compile(r'\b[a-zA-Zа-яА-Я0-9_.+-]+@[a-zA-Zа-яА-Я0-9-]+\.[a-zA-Zа-яА-Я]{2,}\b')
-    telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')
-    
+    telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')    
     doc = nlp(text)
 
     if flag == 1:
         emails_spacy = [token.text for token in doc if token.like_email]
-        emails_regex = email_pattern.findall(text)
-        emails = list(set(emails_spacy + emails_regex))
-        return emails
+
+        valid_emails = []
+        for email in emails_spacy:
+            try:
+                v = validate_email(email)
+                normalized_domain = normalize_domain(v['domain'])
+                if normalized_domain:
+                    local_part = v['local']
+                    valid_emails.append(f"{local_part}@{normalized_domain}")
+            except EmailNotValidError:
+                continue
+        return valid_emails
     elif flag == 2:
         # urls_spacy = [token.text for token in doc if token.like_url]
         valid_tlds = run_check_domain(text)
@@ -96,7 +111,7 @@ def Parsing(text, flag) -> str:
 def load_allowed_domains(url):
     response = requests.get(url)
     if response.status_code == 200:
-        return response.text.splitlines()
+        return response.text.lower().splitlines()
     else:
         raise Exception("Не удалось загрузить список доменов")
 
@@ -114,3 +129,14 @@ def check_domain(url, user_domain):
 def run_check_domain(user_domain) -> bool:
     allowed_domains_url = 'https://data.iana.org/TLD/tlds-alpha-by-domain.txt'
     return check_domain(allowed_domains_url, user_domain)
+
+
+def normalize_domain(domain):
+    # Normalize domain using NFC
+    normalized_domain = unicodedata.normalize('NFC', domain)
+    try:
+        # Convert to ASCII using IDNA
+        ascii_domain = idna.encode(normalized_domain).decode('ascii')
+    except idna.IDNAError:
+        ascii_domain = None
+    return ascii_domain
