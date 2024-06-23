@@ -17,7 +17,7 @@ def process_input(input_text):
 
     result_label = result_label.config(text=f"Результат: {result}")
 
-def openai(text) -> str:
+def openai(text):
     data = load_data_from_csv('train_set.csv')
     D = train_test_split(data)
     
@@ -47,7 +47,7 @@ def openai(text) -> str:
         result = Parsing(text, 4)
         
             
-    return result 
+    return result, predicted
 
 def load_data_from_csv(filename):
     data = {'text': [], 'label': []}
@@ -73,7 +73,7 @@ def train_test_split(data, validation_split=0.1):
     }
     
 def Parsing(text, flag) -> str:
-        nlp = spacy.load("en_core_web_sm")
+        nlp = spacy.load("en_core_web_trf")
 
         vk_pattern = re.compile(r'\bvk\.com\/[a-zA-Z0-9_]+\b')
         doc = nlp(text)
@@ -97,11 +97,11 @@ def Parsing(text, flag) -> str:
             valid_urls = []
             for url in urls_spacy:
                 domain = url.split('.')[-1].lower()
+                domain = domain.split('/')[0].strip()
+                print(domain)
                 if run_check_domain(domain):
                     try:
-                        normalized_url = normalize_domain(url)
-                        if normalized_url:
-                            valid_urls.append(normalized_url)
+                        valid_urls.append(url)
                     except idna.IDNAError:
                         continue
             urls = list(set(valid_urls))
@@ -142,6 +142,7 @@ def run_check_domain(user_domain) -> bool:
 def normalize_domain(domain):
     # Normalize domain using NFC
     normalized_domain = unicodedata.normalize('NFC', domain)
+    print(normalized_domain)
     try:
         # Convert to ASCII using IDNA
         ascii_domain = idna.encode(normalized_domain).decode('ascii')

@@ -6,16 +6,17 @@ def process_input():
     # Получаем входную строку
     input_text = entry.get()
     
-    result = helper.openai(input_text)
+    result, link_type = helper.openai(input_text)
     
     result_label.config(text=f"Результат: {result}")
+    result_label_2.config(text=f"Тип ссылки: {link_type}")
 
 # Создаем главное окно
 root = tk.Tk()
 root.title("Пример UI")
 
 # Создаем виджет для ввода строки
-entry = tk.Entry(root, width=40)
+entry = tk.Entry(root, width=150)
 entry.pack(padx=20, pady=10)
 
 # Создаем кнопку для запуска логики
@@ -25,6 +26,9 @@ process_button.pack(pady=5)
 # Создаем метку для вывода результата
 result_label = tk.Label(root, text="Результат: ")
 result_label.pack(pady=10)
+
+result_label_2 = tk.Label(root, text="Тип ссылки: ")
+result_label_2.pack(pady=10)
 
 # Запускаем главный цикл
 root.mainloop()
