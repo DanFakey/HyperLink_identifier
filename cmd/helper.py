@@ -6,11 +6,10 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score
 import csv
-import re
 import spacy
 from email_validator import validate_email, EmailNotValidError
-import idna
 import unicodedata
+import re
 
 
 def process_input(input_text):
@@ -31,7 +30,7 @@ def openai(text) -> str:
     
     
     zz = [text]
-    predicted = text_clf.predict(zz)
+    predicted = text_clf.predict(zz) # TODO: разобраться
     result = ""
 
     if predicted == "Почта":
@@ -45,6 +44,7 @@ def openai(text) -> str:
         result = Parsing(text, 3)
     elif predicted == "ВК":
         print("Это ВК")
+        result = Parsing(text, 4)
         
             
     return result 
@@ -73,44 +73,47 @@ def train_test_split(data, validation_split=0.1):
     }
     
 def Parsing(text, flag) -> str:
-    nlp = spacy.load("en_core_web_sm")
+        nlp = spacy.load("en_core_web_sm")
 
-    telegram_pattern = re.compile(r'\B@[a-zA-Z0-9_]{5,}\b')    
-    doc = nlp(text)
+        vk_pattern = re.compile(r'\bvk\.com\/[a-zA-Z0-9_]+\b')
+        doc = nlp(text)
 
-    if flag == 1:
-        emails_spacy = [token.text for token in doc if token.like_email]
+        if flag == 1:
+            emails_spacy = [token.text for token in doc if token.like_email]
 
-        valid_emails = []
-        for email in emails_spacy:
-            try:
-                v = validate_email(email)
-                normalized_domain = normalize_domain(v['domain'])
-                if normalized_domain:
-                    local_part = v['local']
-                    valid_emails.append(f"{local_part}@{normalized_domain}")
-            except EmailNotValidError:
-                continue
-        return valid_emails
-    elif flag == 2:
-        urls_spacy = [token.text for token in doc if token.like_url]
-        valid_urls = []
-        for url in urls_spacy:
-            domain = url.split('.')[-1].lower()
-            print("domain = ", domain)
-            if run_check_domain(domain):
+            valid_emails = []
+            for email in emails_spacy:
                 try:
-                    normalized_url = normalize_domain(url)
-                    if normalized_url:
-                        valid_urls.append(normalized_url)
-                except idna.IDNAError:
+                    v = validate_email(email)
+                    normalized_domain = normalize_domain(v['domain'])
+                    if normalized_domain:
+                        local_part = v['local']
+                        valid_emails.append(f"{local_part}@{normalized_domain}")
+                except EmailNotValidError:
                     continue
-        urls = list(set(valid_urls))
-        return urls
-    elif flag == 3:
-        telegram_accounts = [token.text for token in doc if token.text.startswith('@') and len(token.text) > 5]
-        telegram_accounts = list(set(telegram_accounts))
-        return telegram_accounts
+            return valid_emails
+        elif flag == 2:
+            urls_spacy = [token.text for token in doc if token.like_url]
+            valid_urls = []
+            for url in urls_spacy:
+                domain = url.split('.')[-1].lower()
+                if run_check_domain(domain):
+                    try:
+                        normalized_url = normalize_domain(url)
+                        if normalized_url:
+                            valid_urls.append(normalized_url)
+                    except idna.IDNAError:
+                        continue
+            urls = list(set(valid_urls))
+            return urls
+        elif flag == 3:
+            telegram_accounts = [token.text for token in doc if token.text.startswith('@') and len(token.text) > 5]
+            telegram_accounts = list(set(telegram_accounts))
+            return telegram_accounts
+        elif flag == 4:
+            vk_accounts = vk_pattern.findall(text)
+            vk_accounts = list(set(vk_accounts))
+            return vk_accounts
         
 
 def load_allowed_domains(url):

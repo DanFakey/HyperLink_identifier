@@ -8,10 +8,6 @@ def process_input():
     
     result = helper.openai(input_text)
     
-    # Выполняем некоторую логику
-    # output_text = input_text[::-1]  # Переворачиваем строку, например
-    
-    # Выводим результат
     result_label.config(text=f"Результат: {result}")
 
 # Создаем главное окно
