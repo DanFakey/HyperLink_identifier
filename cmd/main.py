@@ -14,8 +14,19 @@ def process_input():
     result_label.config(text=f"Результат: {input_text}")
     result_label_2.config(text=f"Тип ссылки: {link_type}")
 
-    print(str(result[0]))
-    result_label.bind("<Результат>", lambda e: callback(str(result[0])))
+    if link_type == "Ссылка":
+        result_label.bind("<Button-1>", lambda e: callback(str(result[0])))
+    elif link_type == "Телеграм":
+        result = result[0]
+        result = result[1:] 
+        result_label.bind("<Button-1>", lambda e: callback("t.me/"+str(result)))
+    elif link_type == "Почта":
+        result[0] = "mailto:"+result[0]
+        result_label.bind("<Button-1>", lambda e: callback(str(result[0])))
+    elif link_type == "ВК":
+        result_label.bind("<Button-1>", lambda e: callback(str(result[0])))
+
+
 
 # Создаем главное окно
 root = tk.Tk()
