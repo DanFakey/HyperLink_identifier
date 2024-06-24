@@ -1,6 +1,9 @@
 import tkinter as tk
 import helper
+import webbrowser
 
+def callback(url):
+    webbrowser.open_new(url)
 
 def process_input():
     # Получаем входную строку
@@ -8,8 +11,11 @@ def process_input():
     
     result, link_type = helper.openai(input_text)
     
-    result_label.config(text=f"Результат: {result}")
+    result_label.config(text=f"Результат: {input_text}")
     result_label_2.config(text=f"Тип ссылки: {link_type}")
+
+    print(str(result[0]))
+    result_label.bind("<Результат>", lambda e: callback(str(result[0])))
 
 # Создаем главное окно
 root = tk.Tk()
